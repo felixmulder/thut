@@ -3,6 +3,7 @@ module Main (main) where
 import Thut.Prelude
 
 import Control.Monad (forM_)
+import Data.Default.Class (def)
 import Data.Either (Either)
 import Data.Foldable (foldMap)
 import Data.List (zip)
@@ -18,7 +19,7 @@ main = do
   filePaths <- getArgs
   fileContents <- traverse readFile filePaths
 
-  foldMap interpret (uncurry parseDocument <$> zip filePaths fileContents)
+  foldMap (interpret def) (uncurry parseDocument <$> zip filePaths fileContents)
     >>= reportErrors
     >>= writeOutput
 

@@ -5,6 +5,7 @@ module Thut.Interpreter
 import           Thut.Prelude
 
 import           Control.Monad ((<=<), join)
+import           Data.Default.Class (Default(..))
 import           Data.Either (Either, either)
 import           Data.Foldable (foldMap)
 import           Data.Functor ((<&>))
@@ -14,21 +15,28 @@ import           Data.Traversable (traverse)
 import           Language.Haskell.Ghcid
 import           Thut.Types (Block(..), CodeblockType(..), Document(..), Result(..))
 
-interpret :: Document -> IO (Result [Text] [Document])
-interpret (Document fp blocks) =
-  foldMap interpretBlock blocks <&> fmap (\b -> [Document fp b])
+data InterpreterConfig = InterpreterConfig
+  { configStartCmd :: Text
+  }
 
-interpretBlock :: Block -> IO (Result [Text] [Block])
-interpretBlock = \case
+instance Default InterpreterConfig where
+  def = InterpreterConfig { configStartCmd = "cabal v2-repl" }
+
+interpret :: InterpreterConfig -> Document -> IO (Result [Text] [Document])
+interpret config (Document fp blocks) =
+  foldMap (interpretBlock config) blocks <&> fmap (\b -> [Document fp b])
+
+interpretBlock :: InterpreterConfig -> Block -> IO (Result [Text] [Block])
+interpretBlock config = \case
   Markdown lines ->
     pure . Result . pure . Markdown $ lines
   Codeblock blockType@(Other _) contents ->
     pure . Result . pure $ Codeblock blockType contents
-  Codeblock ThutEval contents -> fmap pure <$> evalContents contents
+  Codeblock ThutEval contents -> fmap pure <$> evalContents config contents
 
-evalContents :: [Text] -> IO (Result [Text] Block)
-evalContents xs = do
-  ghci <- fst <$> startGhci "ghci" Nothing (\_ _ -> pure ())
+evalContents :: InterpreterConfig -> [Text] -> IO (Result [Text] Block)
+evalContents config xs = do
+  ghci <- fst <$> startGhci "cabal v2-repl" Nothing (\_ _ -> pure ())
 
   let
     evalLine line =

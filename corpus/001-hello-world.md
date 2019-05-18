@@ -5,3 +5,7 @@ import Prelude
 
 5 + 5
 ```
+
+```thut:eval
+putStrLn "hello, world!"
+```
