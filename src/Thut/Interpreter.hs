@@ -35,8 +35,9 @@ interpretBlock config = \case
   Codeblock ThutEval contents -> fmap pure <$> evalContents config contents
 
 evalContents :: InterpreterConfig -> [Text] -> IO (Result [Text] Block)
-evalContents config xs = do
-  ghci <- fst <$> startGhci "cabal v2-repl" Nothing (\_ _ -> pure ())
+evalContents InterpreterConfig{..} xs = do
+  (ghci, _) <-
+    startGhci (unpack configStartCmd) Nothing (\_ _ -> pure ())
 
   let
     evalLine line =
