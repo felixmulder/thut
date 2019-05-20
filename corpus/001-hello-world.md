@@ -8,4 +8,6 @@ import Prelude
 
 ```thut:eval
 putStrLn "hello, world!"
+
+HAHA SARA
 ```

@@ -1,6 +1,6 @@
 module Main (main) where
 
-import Thut.Prelude
+import Prelude hiding (readFile, putStrLn)
 
 import Control.Monad
 import Control.Monad (forM_)
@@ -9,6 +9,7 @@ import Data.Either (Either)
 import Data.Foldable (foldMap)
 import Data.List (zip)
 import Data.Text (Text, stripEnd, isPrefixOf, drop, intercalate)
+import Data.Text.IO (readFile, putStrLn)
 import Data.Traversable (traverse)
 import System.Environment (getArgs)
 import System.Exit (exitFailure)

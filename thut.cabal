@@ -57,8 +57,9 @@ library thut-library
     Thut
     Thut.Interpreter
     Thut.Parser
-    Thut.Prelude
     Thut.Render
     Thut.Types
+  other-modules:
+    Thut.Prelude
   default-language:
     Haskell2010

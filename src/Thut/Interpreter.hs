@@ -65,7 +65,7 @@ evalLine ghci cmd = do
   output <- newIORef []
 
   void . execStream ghci (unpack cmd) $ \stream s ->
-    modifyIORef (if stream == Stdout then output else errors) (pack s :)
+    modifyIORef (if stream == Stdout then output else errors) (<> [pack s])
 
   finalErrors <- readIORef errors
 
