@@ -5,21 +5,22 @@ module Thut.Prelude
   , ($)
   , (++)
   , (<$>)
+  , (<>)
   , (>>)
   , (>>=)
-  , (<>)
   -- * Common functions
   , const
   , curry
   , flip
   , fmap
   , fst
+  , null
   , print
-  , pure
   , snd
   , uncurry
   , undefined
   -- * Common type classes
+  , Applicative(..)
   , Default(..)
   , Eq(..)
   , Show(..)

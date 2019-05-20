@@ -2,6 +2,7 @@ module Main (main) where
 
 import Thut.Prelude
 
+import Control.Monad
 import Control.Monad (forM_)
 import Data.Default.Class (def)
 import Data.Either (Either)
@@ -10,37 +11,42 @@ import Data.List (zip)
 import Data.Text (Text, stripEnd, isPrefixOf, drop, intercalate)
 import Data.Traversable (traverse)
 import System.Environment (getArgs)
+import System.Exit (exitFailure)
 import Thut.Parser (parseDocument)
 import Thut.Types (Block(..), CodeblockType(..), Document(..), Result(..))
 import Thut.Interpreter (interpret)
+import Thut.Render (renderBlock)
 
 main :: IO ()
 main = do
   filePaths <- getArgs
   fileContents <- traverse readFile filePaths
 
-  foldMap (interpret def) (uncurry parseDocument <$> zip filePaths fileContents)
+  foldMap (listify <=< interpret def) (uncurry parseDocument <$> zip filePaths fileContents)
     >>= reportErrors
     >>= writeOutput
+    >>= exitCode
 
-reportErrors :: Result [Text] [Document] -> IO (Result [Text] [Document])
+listify :: Applicative f => Result a b -> f (Result [a] [b])
+listify = pure . \case
+  Result a -> Result [a]
+  Errors e -> Errors [e]
+
+reportErrors :: Result [Document] [Document] -> IO (Result [Document] [Document])
 reportErrors = \case
-  Errors xs ->
-    forM_ xs print >> pure (Errors xs)
+  r@(Errors docs) -> do
+    forM_ docs (putStrLn . intercalate "\n" .  fmap renderBlock . documentBlocks)
+    pure r
   r -> pure r
 
-writeOutput :: Result [Text] [Document] -> IO ()
+exitCode :: Result [Document] [Document] -> IO ()
+exitCode = \case
+  Result _ -> pure ()
+  Errors _ -> exitFailure
+
+writeOutput :: Result [Document] [Document] -> IO (Result [Document] [Document])
 writeOutput = \case
-  Errors _ -> pure ()
-  Result xs -> forM_ xs (putStrLn . unlines' . fmap render . documentBlocks)
-
-render :: Block -> Text
-render = \case
-  Codeblock (Other title) xs ->
-    unlines' $ ["```" <> title] ++ xs ++ ["```"]
-  Markdown xs ->
-    unlines' xs
-
-unlines' :: [Text] -> Text
-unlines' = intercalate "\n"
-
+  r@(Result xs) -> do
+    forM_ xs (putStrLn . intercalate "\n" . fmap renderBlock . documentBlocks)
+    pure r
+  r -> pure r
