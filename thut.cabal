@@ -17,6 +17,10 @@ description:         Based on tut by Rob Norris for Scala. This tool takes
 build-type:          Simple
 extra-source-files:  CHANGELOG.md
 
+source-repository    head
+  type:              git
+  location:          git://github.com/felixmulder/thut.git
+
 executable thut
   main-is:
     Main.hs
@@ -31,6 +35,8 @@ executable thut
     LambdaCase
     NoImplicitPrelude
     OverloadedStrings
+  default-language:
+    Haskell2010
 
 library thut-library
   default-extensions:
