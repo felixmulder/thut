@@ -12,5 +12,7 @@ stdenv.mkDerivation {
     hoogle
     hlint
     ghcid
+    ghc
+    libiconv
   ];
 }
