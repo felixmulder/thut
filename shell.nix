@@ -6,6 +6,7 @@ with import (builtins.fetchGit {
 
 stdenv.mkDerivation {
   name = "thut";
+
   buildInputs = with haskell.packages.ghc864; [
     cabal-install
     hdevtools
