@@ -21,7 +21,7 @@ source-repository    head
   type:              git
   location:          git://github.com/felixmulder/thut.git
 
-library thut-core
+library
   default-extensions:
     LambdaCase
     NoImplicitPrelude
@@ -48,7 +48,7 @@ library thut-core
   default-language:
     Haskell2010
 
-executable thut
+executable thut-standalone
   main-is:
     Standalone.hs
   hs-source-dirs:
@@ -57,7 +57,7 @@ executable thut
     , base >=4.12 && <4.13
     , data-default-class >= 0.1.2.0 && <0.1.3
     , text >=1.2.3.1 && <1.3
-    , thut-core
+    , thut
   default-extensions:
     LambdaCase
     NoImplicitPrelude
