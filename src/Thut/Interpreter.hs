@@ -28,12 +28,20 @@ interpretBlock :: InterpreterConfig -> Block -> IO (Result [Block] [Block])
 interpretBlock config = \case
   Markdown lines ->
     pure . Result . pure . Markdown $ lines
-  Codeblock blockType@(Other _) contents ->
-    pure . Result . pure $ Codeblock blockType contents
   Codeblock ThutEval contents ->
     evalContents config contents <&> \case
       Result blocks -> Result [blocks]
       Errors errors -> Errors [Codeblock ThutEval errors]
+  Codeblock ThutPassthrough contents ->
+    evalPassthrough config contents <&> \case
+      Result blocks -> Result [blocks]
+      Errors errors -> Errors [Codeblock ThutEval errors]
+  Codeblock ThutSilent contents -> do
+    evalContents config contents <&> \case
+      Result _ -> Result []
+      Errors errors -> Errors [Codeblock ThutEval errors]
+  Codeblock blockType@(Other _) contents ->
+    pure . Result . pure $ Codeblock blockType contents
 
 withGhci :: InterpreterConfig -> (Ghci -> IO a) -> IO a
 withGhci InterpreterConfig{..} f = do
@@ -46,6 +54,17 @@ data Interpreted = Interpreted
   { interpretedText :: Text
   , interpretedResult :: [Text]
   }
+
+evalPassthrough :: InterpreterConfig -> [Text] ->IO (Result [Text] Block)
+evalPassthrough config xs = withGhci config $ \ghci -> do
+  let
+    consolidateResults :: Result Interpreted Interpreted -> Result [Text] [Text]
+    consolidateResults (Result (Interpreted _ output)) = Result output
+    consolidateResults (Errors (Interpreted input output)) =
+      Errors $ input : renderError output
+
+  interpreteds <- traverse (evalLine ghci) xs
+  pure $ Markdown <$> foldMap consolidateResults interpreteds
 
 evalContents :: InterpreterConfig -> [Text] -> IO (Result [Text] Block)
 evalContents config xs = withGhci config $ \ghci -> do

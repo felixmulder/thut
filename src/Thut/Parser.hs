@@ -30,6 +30,8 @@ initialParsed = Parsed (Markdown []) []
 parseTitle :: Text -> CodeblockType
 parseTitle title = case strip title of
   "thut:eval" -> ThutEval
+  "thut:passthrough" -> ThutPassthrough
+  "thut:silent" -> ThutSilent
   other -> Other other
 
 parseLine :: Text -> State Parsed ()

@@ -38,6 +38,8 @@ data Block
 
 data CodeblockType
   = ThutEval
+  | ThutPassthrough
+  | ThutSilent
   | Other Text
   deriving (Eq, Show)
 
