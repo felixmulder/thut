@@ -1,12 +1,12 @@
 Hello world!
 
 ```thut:eval
-import Prelude
-
 5 + 5
 ```
 
 ```thut:eval
+import Prelude -- This should give ambiguous "putStrLn"
+
 putStrLn "hello, world!"
 
 HAHA SARA

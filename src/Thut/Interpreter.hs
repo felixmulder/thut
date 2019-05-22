@@ -20,25 +20,25 @@ import           Thut.Types (Document(..), Block(..), CodeblockType(..))
 import           Thut.Types (InterpreterConfig(..), Result(..), isError)
 
 interpret :: InterpreterConfig -> Document -> IO (Result Document Document)
-interpret config (Document fp blocks) =
-  foldMap (interpretBlock config) blocks <&> \case
+interpret config (Document fp blocks) = withGhci config $ \ghci ->
+  foldMap (interpretBlock ghci) blocks <&> \case
     Result blocks -> Result $ Document fp blocks
     Errors blocks -> Errors $ Document fp blocks
 
-interpretBlock :: InterpreterConfig -> Block -> IO (Result [Block] [Block])
-interpretBlock config = \case
+interpretBlock :: Ghci -> Block -> IO (Result [Block] [Block])
+interpretBlock ghci = \case
   Markdown lines ->
     pure . Result . pure . Markdown $ lines
   Codeblock ThutEval contents ->
-    evalContents config contents <&> \case
+    evalContents ghci contents <&> \case
       Result blocks -> Result [blocks]
       Errors errors -> Errors [Codeblock ThutEval errors]
   Codeblock ThutPassthrough contents ->
-    evalPassthrough config contents <&> \case
+    evalPassthrough ghci contents <&> \case
       Result blocks -> Result [blocks]
       Errors errors -> Errors [Codeblock ThutEval errors]
   Codeblock ThutSilent contents -> do
-    evalContents config contents <&> \case
+    evalContents ghci contents <&> \case
       Result _ -> Result []
       Errors errors -> Errors [Codeblock ThutEval errors]
   Codeblock blockType@(Other _) contents ->
@@ -46,7 +46,7 @@ interpretBlock config = \case
 
 withGhci :: InterpreterConfig -> (Ghci -> IO a) -> IO a
 withGhci InterpreterConfig{..} f = do
-  (ghci, _) <- startGhci (unpack configStartCmd) Nothing (\_ _ -> pure ())
+  (ghci, _) <- startGhci (Text.unpack configStartCmd) Nothing (\_ _ -> pure ())
   a <- f ghci
   stopGhci ghci
   pure a
@@ -56,8 +56,8 @@ data Interpreted = Interpreted
   , interpretedResult :: [Text]
   }
 
-evalPassthrough :: InterpreterConfig -> [Text] ->IO (Result [Text] Block)
-evalPassthrough config xs = withGhci config $ \ghci -> do
+evalPassthrough :: Ghci -> [Text] -> IO (Result [Text] Block)
+evalPassthrough ghci xs = do
   let
     consolidateResults :: Result Interpreted Interpreted -> Result [Text] [Text]
     consolidateResults (Result (Interpreted _ output)) = Result output
@@ -67,8 +67,8 @@ evalPassthrough config xs = withGhci config $ \ghci -> do
   interpreteds <- traverse (evalLine ghci) xs
   pure $ Markdown <$> foldMap consolidateResults interpreteds
 
-evalContents :: InterpreterConfig -> [Text] -> IO (Result [Text] Block)
-evalContents config xs = withGhci config $ \ghci -> do
+evalContents :: Ghci -> [Text] -> IO (Result [Text] Block)
+evalContents ghci xs = do
   let
     consolidateResults :: Result Interpreted Interpreted -> Result [Text] [Text]
     consolidateResults (Result (Interpreted input output)) =
@@ -84,8 +84,8 @@ evalLine ghci cmd = do
   errors <- newIORef []
   output <- newIORef []
 
-  void . execStream ghci (unpack cmd) $ \stream s ->
-    modifyIORef (if stream == Stdout then output else errors) (<> [pack s])
+  void . execStream ghci (Text.unpack cmd) $ \stream s ->
+    modifyIORef (if stream == Stdout then output else errors) (<> [Text.pack s])
 
   finalErrors <- readIORef errors
 
