@@ -21,24 +21,24 @@ import           Thut.Types (InterpreterConfig(..), Result(..), isError)
 
 interpret :: InterpreterConfig -> Document -> IO (Result Document Document)
 interpret config (Document fp blocks) = withGhci config $ \ghci ->
-  foldMap (interpretBlock ghci) blocks <&> \case
+  foldMap (interpretBlock config ghci) blocks <&> \case
     Result blocks -> Result $ Document fp blocks
     Errors blocks -> Errors $ Document fp blocks
 
-interpretBlock :: Ghci -> Block -> IO (Result [Block] [Block])
-interpretBlock ghci = \case
+interpretBlock :: InterpreterConfig -> Ghci -> Block -> IO (Result [Block] [Block])
+interpretBlock config ghci = \case
   Markdown lines ->
     pure . Result . pure . Markdown $ lines
   Codeblock ThutEval contents ->
-    evalContents ghci contents <&> \case
+    evalContents config ghci contents <&> \case
       Result blocks -> Result [blocks]
       Errors errors -> Errors [Codeblock ThutEval errors]
   Codeblock ThutPassthrough contents ->
-    evalPassthrough ghci contents <&> \case
+    evalPassthrough config ghci contents <&> \case
       Result blocks -> Result [blocks]
       Errors errors -> Errors [Codeblock ThutEval errors]
   Codeblock ThutSilent contents -> do
-    evalContents ghci contents <&> \case
+    evalContents config ghci contents <&> \case
       Result _ -> Result []
       Errors errors -> Errors [Codeblock ThutEval errors]
   Codeblock blockType@(Other _) contents ->
@@ -56,25 +56,25 @@ data Interpreted = Interpreted
   , interpretedResult :: [Text]
   }
 
-evalPassthrough :: Ghci -> [Text] -> IO (Result [Text] Block)
-evalPassthrough ghci xs = do
+evalPassthrough :: InterpreterConfig -> Ghci -> [Text] -> IO (Result [Text] Block)
+evalPassthrough config ghci xs = do
   let
     consolidateResults :: Result Interpreted Interpreted -> Result [Text] [Text]
     consolidateResults (Result (Interpreted _ output)) = Result output
     consolidateResults (Errors (Interpreted input output)) =
-      Errors $ input : renderError output
+      Errors $ input : renderError config output
 
   interpreteds <- traverse (evalLine ghci) xs
   pure $ Markdown <$> foldMap consolidateResults interpreteds
 
-evalContents :: Ghci -> [Text] -> IO (Result [Text] Block)
-evalContents ghci xs = do
+evalContents :: InterpreterConfig -> Ghci -> [Text] -> IO (Result [Text] Block)
+evalContents config ghci xs = do
   let
     consolidateResults :: Result Interpreted Interpreted -> Result [Text] [Text]
     consolidateResults (Result (Interpreted input output)) =
       Result $ input : fmap ("-- " <>) output
     consolidateResults (Errors (Interpreted input output)) =
-      Errors $ input : renderError output
+      Errors $ input : renderError config output
 
   interpreteds <- traverse (evalLine ghci) xs
   pure $ Codeblock (Other "haskell") <$> foldMap consolidateResults interpreteds
@@ -97,8 +97,8 @@ evalLine ghci cmd = do
 
 -- Error rendering
 --
-renderError :: [Text] -> [Text]
-renderError output =
+renderError :: InterpreterConfig -> [Text] -> [Text]
+renderError config output =
   let
     splitBlocks current acc (next : rest) =
       if Text.isPrefixOf "<interactive>:" next then
@@ -129,13 +129,15 @@ renderError output =
       filter (not . all (Text.null . Text.strip)) $ errorBlocks
 
     highlighted =
-      fmap (\line -> red <> "  ┃ " <> reset <> line) <$> errors
+      fmap (\line -> red config <> "  ┃ " <> reset config <> line) <$> errors
 
   in
     intercalate [] highlighted
 
-red :: Text
-red = "\x1b[31m"
+red :: InterpreterConfig -> Text
+red config =
+  if configUseColor config then "\x1b[31m" else ""
 
-reset :: Text
-reset = "\x1b[0m"
+reset :: InterpreterConfig -> Text
+reset config =
+  if configUseColor config then "\x1b[0m" else ""
