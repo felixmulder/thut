@@ -4,10 +4,8 @@ module Thut.Interpreter
 
 import           Thut.Prelude
 
-import           Control.Monad ((<=<), join, forM_, void)
-import           Data.Default.Class (def)
-import           Data.Either (Either(..), either, isLeft)
-import           Data.Foldable (any, foldMap)
+import           Control.Monad (void)
+import           Data.Foldable (foldMap)
 import           Data.Functor ((<&>))
 import           Data.IORef (modifyIORef, newIORef, readIORef)
 import           Data.List (all, dropWhile, dropWhileEnd, intercalate, filter)
@@ -17,11 +15,11 @@ import qualified Data.Text as Text
 import           Data.Traversable (traverse)
 import           Language.Haskell.Ghcid (Ghci, Stream(..), execStream, startGhci, stopGhci)
 import           Thut.Types (Document(..), Block(..), CodeblockType(..))
-import           Thut.Types (InterpreterConfig(..), Result(..), isError)
+import           Thut.Types (InterpreterConfig(..), Result(..))
 
 interpret :: InterpreterConfig -> Document -> IO (Result Document Document)
-interpret config (Document fp blocks) = withGhci config $ \ghci ->
-  foldMap (interpretBlock config ghci) blocks <&> \case
+interpret config (Document fp unparsedBlocks) = withGhci config $ \ghci ->
+  foldMap (interpretBlock config ghci) unparsedBlocks <&> \case
     Result blocks -> Result $ Document fp blocks
     Errors blocks -> Errors $ Document fp blocks
 
@@ -60,7 +58,8 @@ evalPassthrough :: InterpreterConfig -> Ghci -> [Text] -> IO (Result [Text] Bloc
 evalPassthrough config ghci xs = do
   let
     consolidateResults :: Result Interpreted Interpreted -> Result [Text] [Text]
-    consolidateResults (Result (Interpreted _ output)) = Result output
+    consolidateResults (Result Interpreted{..}) =
+      Result interpretedResult
     consolidateResults (Errors (Interpreted input output)) =
       Errors $ input : renderError config output
 

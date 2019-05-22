@@ -4,11 +4,11 @@ module Thut.Parser
 
 import Thut.Prelude
 
-import Control.Monad (mapM_)
-import Control.Monad.Trans.State.Lazy
-import Data.Maybe (Maybe)
-import Data.Text (Text, drop, isPrefixOf, lines, strip, stripEnd)
-import Thut.Types
+import           Control.Monad (mapM_)
+import           Control.Monad.Trans.State.Lazy
+import           Data.Text (Text, isPrefixOf)
+import qualified Data.Text as Text
+import           Thut.Types
 
 parseDocument :: FilePath -> Text -> Document
 parseDocument fp =
@@ -16,8 +16,8 @@ parseDocument fp =
   . getBlocks
   . flip execState initialParsed
   . mapM_ parseLine
-  . fmap stripEnd
-  . lines
+  . fmap Text.stripEnd
+  . Text.lines
 
 data Parsed = Parsed
   { currentBlock :: Block
@@ -25,13 +25,13 @@ data Parsed = Parsed
   }
 
 getBlocks :: Parsed -> [Block]
-getBlocks (Parsed last blocks) = blocks ++ [last]
+getBlocks Parsed{..} = parsedBlocks ++ [currentBlock]
 
 initialParsed :: Parsed
 initialParsed = Parsed (Markdown []) []
 
 parseTitle :: Text -> CodeblockType
-parseTitle title = case strip title of
+parseTitle title = case Text.strip title of
   "thut:eval" -> ThutEval
   "thut:passthrough" -> ThutPassthrough
   "thut:silent" -> ThutSilent
@@ -40,7 +40,7 @@ parseTitle title = case strip title of
 parseLine :: Text -> State Parsed ()
 parseLine line =
   if "```" `isPrefixOf` line then
-    toggleCodeblock (drop 3 line)
+    toggleCodeblock (Text.drop 3 line)
   else
     addLine line
 

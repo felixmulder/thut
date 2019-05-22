@@ -21,6 +21,8 @@ renderBlock = \case
 renderTitle :: CodeblockType -> Text
 renderTitle = \case
   Other title -> title
+  ThutSilent -> "thut:silent"
+  ThutPassthrough -> "thut:passthrough"
   ThutEval -> "thut:eval"
 
 unlines' :: [Text] -> Text
