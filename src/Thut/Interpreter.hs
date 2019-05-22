@@ -10,9 +10,10 @@ import           Data.Either (Either(..), either, isLeft)
 import           Data.Foldable (any, foldMap)
 import           Data.Functor ((<&>))
 import           Data.IORef (modifyIORef, newIORef, readIORef)
-import           Data.List (dropWhileEnd)
+import           Data.List (all, dropWhile, dropWhileEnd, intercalate, filter)
 import           Data.Maybe (Maybe(..))
-import           Data.Text (Text, intercalate, pack, strip, unpack)
+import           Data.Text (Text)
+import qualified Data.Text as Text
 import           Data.Traversable (traverse)
 import           Language.Haskell.Ghcid
 import           Thut.Types (Document(..), Block(..), CodeblockType(..))
@@ -99,10 +100,39 @@ evalLine ghci cmd = do
 renderError :: [Text] -> [Text]
 renderError output =
   let
-    lines = dropWhileEnd ((== "") . strip) output
+    splitBlocks current acc (next : rest) =
+      if Text.isPrefixOf "<interactive>:" next then
+        splitBlocks [removePrefix next] (acc ++ [current]) rest
+      else
+        splitBlocks (current ++ [next]) acc rest
+    splitBlocks current acc [] =
+      acc ++ [current]
+
+    removePrefix :: Text -> Text
+    removePrefix line = case Text.splitOn ":" line of
+      (_interactive : _row : _col : _err : rest) ->
+        Text.intercalate ":" rest
+      _ ->
+        line
+
+    errorBlocks =
+      splitBlocks [] [] output
+
+    headMap :: (a -> a) -> [a] -> [a]
+    headMap f (x : xs) = f x : xs
+    headMap _ [] = []
+
+    errors =
+      fmap (headMap Text.stripStart) .
+      fmap (dropWhile Text.null) .
+      fmap (dropWhileEnd Text.null) .
+      filter (not . all (Text.null . Text.strip)) $ errorBlocks
+
+    highlighted =
+      fmap (\line -> red <> "  ┃ " <> reset <> line) <$> errors
+
   in
-    pure . (<> reset) . intercalate "\n" $
-      fmap (red <>) lines
+    intercalate [] highlighted
 
 red :: Text
 red = "\x1b[31m"

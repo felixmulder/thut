@@ -15,8 +15,11 @@ module Thut.Prelude
   , flip
   , fmap
   , fst
+  , not
   , null
+  , otherwise
   , print
+  , read
   , snd
   , uncurry
   , undefined
@@ -24,10 +27,14 @@ module Thut.Prelude
   , Applicative(..)
   , Default(..)
   , Eq(..)
+  , Num(..)
   , Show(..)
   -- * Common types
   , Bool(..)
   , FilePath
+  , Int
+  , Integer
+  , Char
   , IO
   -- * Text exports
   , Text.putStrLn
