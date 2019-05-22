@@ -13,7 +13,7 @@ import Thut.Types
 parseDocument :: FilePath -> Text -> Document
 parseDocument fp =
   Document fp
-  . parsedBlocks
+  . getBlocks
   . flip execState initialParsed
   . mapM_ parseLine
   . fmap stripEnd
@@ -23,6 +23,9 @@ data Parsed = Parsed
   { currentBlock :: Block
   , parsedBlocks :: [Block]
   }
+
+getBlocks :: Parsed -> [Block]
+getBlocks (Parsed last blocks) = blocks ++ [last]
 
 initialParsed :: Parsed
 initialParsed = Parsed (Markdown []) []
