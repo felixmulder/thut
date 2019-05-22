@@ -15,7 +15,7 @@ import           Data.Maybe (Maybe(..))
 import           Data.Text (Text)
 import qualified Data.Text as Text
 import           Data.Traversable (traverse)
-import           Language.Haskell.Ghcid
+import           Language.Haskell.Ghcid (Ghci, Stream(..), execStream, startGhci, stopGhci)
 import           Thut.Types (Document(..), Block(..), CodeblockType(..))
 import           Thut.Types (InterpreterConfig(..), Result(..), isError)
 
