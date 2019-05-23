@@ -9,7 +9,7 @@ import Data.Text (Text, intercalate)
 import Thut.Types (Document(..), Block(..), CodeblockType(..))
 
 renderDocument :: Document -> Text
-renderDocument = intercalate "\n" . fmap renderBlock . documentBlocks
+renderDocument = unlines' . fmap renderBlock . documentBlocks
 
 renderBlock :: Block -> Text
 renderBlock = \case
