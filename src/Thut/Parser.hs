@@ -5,7 +5,7 @@ module Thut.Parser
 import Thut.Prelude
 
 import           Control.Monad (mapM_)
-import           Control.Monad.Trans.State.Lazy
+import           Control.Monad.State.Lazy (State, execState, get, put)
 import           Data.Text (Text, isPrefixOf)
 import qualified Data.Text as Text
 import           Thut.Types

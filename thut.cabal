@@ -50,7 +50,7 @@ library
   build-depends:
     , extra >= 1.6.14 && <1.7
     , ghcid >=0.7.2 && <0.8
-    , transformers >= 0.5.5.0 && <0.5.7
+    , mtl >= 2.2 && <2.3
   hs-source-dirs:
     src
   exposed-modules:
