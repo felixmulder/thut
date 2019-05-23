@@ -23,6 +23,7 @@ source-repository    head
 
 common extensions
   default-extensions:
+    GeneralizedNewtypeDeriving
     LambdaCase
     NoImplicitPrelude
     OverloadedStrings

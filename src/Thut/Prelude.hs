@@ -6,14 +6,10 @@ module Thut.Prelude
   , ($)
   , (++)
   , (<$>)
-  , (<>)
-  , (>>)
-  , (>>=)
   -- * Common functions
   , const
   , curry
   , flip
-  , fmap
   , fst
   , not
   , null
@@ -27,15 +23,21 @@ module Thut.Prelude
   , Applicative(..)
   , Default(..)
   , Eq(..)
+  , Ord(..)
+  , Functor(..)
+  , Monad(..)
+  , Monoid(..)
   , Num(..)
+  , Semigroup(..)
   , Show(..)
   -- * Common types
   , Bool(..)
+  , Char
   , FilePath
+  , IO
   , Int
   , Integer
-  , Char
-  , IO
+  , Maybe(..)
   -- * Text exports
   , Text.putStrLn
   , Text.readFile
@@ -43,6 +45,5 @@ module Thut.Prelude
 
 import           Prelude
 
-import           Control.Applicative (pure)
 import           Data.Default.Class (Default(..))
 import qualified Data.Text.IO as Text
