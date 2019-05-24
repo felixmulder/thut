@@ -8,12 +8,19 @@ import Data.Text (Text)
 data InterpreterConfig = InterpreterConfig
   { configStartCmd :: Text
   , configUseColor :: Bool
+  , configSymbols :: Symbols
   }
+
+data Symbols
+  = Fancy
+  | Plain
+  deriving (Show, Eq)
 
 instance Default InterpreterConfig where
   def = InterpreterConfig
     { configStartCmd = "cabal v2-repl"
     , configUseColor = True
+    , configSymbols = Fancy
     }
 
 data Document = Document

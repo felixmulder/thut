@@ -1,16 +1,26 @@
 module Thut
   ( -- * Eval functions
     evalFile
+  , evalFile'
   , evalText
+  , evalText'
   , evalDocument
+  , evalDocument'
+
+    -- * Document functions
+  , documentHasErrors
+  , blockHasErrors
+  , lineHasErrors
 
     -- * Re-exports
   , parseDocument
   , renderDocument
+  , renderDocument'
   , InterpreterConfig(..)
   , EvaluatedDocument(..)
   , EvaluatedBlock(..)
   , EvaluatedLine(..)
+  , Symbols(..)
   ) where
 
 import Thut.Prelude
@@ -20,8 +30,8 @@ import Data.Text (Text)
 import qualified Data.Text.IO as Text
 import Thut.Interpreter (interpret)
 import Thut.Parser (parseDocument)
-import Thut.Render (renderDocument)
-import Thut.Types (Document, InterpreterConfig(..))
+import Thut.Render (renderDocument, renderDocument', documentHasErrors, blockHasErrors, lineHasErrors)
+import Thut.Types (Document, InterpreterConfig(..), Symbols(..))
 import Thut.Interpreter (EvaluatedDocument(..), EvaluatedBlock(..), EvaluatedLine(..))
 
 evalFile :: FilePath -> IO EvaluatedDocument
