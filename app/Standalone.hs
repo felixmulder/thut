@@ -1,52 +1,25 @@
 module Main (main) where
 
-import Prelude hiding (readFile, putStrLn)
+import           Prelude
 
-import Control.Monad
-import Control.Monad (forM_)
-import Data.Default.Class (def)
-import Data.Foldable (foldMap)
-import Data.List (zip)
-import Data.Text (intercalate)
-import Data.Text.IO (readFile, putStrLn)
-import Data.Traversable (traverse)
-import System.Environment (getArgs)
-import System.Exit (exitFailure)
-import Thut.Parser (parseDocument)
-import Thut.Types (Document(..), Result(..))
-import Thut.Interpreter (interpret)
-import Thut.Render (renderBlock)
+import           Control.Monad (when)
+import qualified Data.Text.IO as Text (putStrLn)
+import           Data.Traversable (traverse)
+import           System.Environment (getArgs)
+import           System.Exit (exitFailure)
+import           Thut (EvaluatedDocument, documentHasErrors, evalFile, renderDocument)
 
 main :: IO ()
-main = do
-  filePaths <- getArgs
-  fileContents <- traverse readFile filePaths
+main =
+  getArgs
+    >>= traverse evalFile
+    >>= traverse renderResults
+    >>= mapM_ exitCodeOnFailure
 
-  foldMap (listify <=< interpret def) (uncurry parseDocument <$> zip filePaths fileContents)
-    >>= reportErrors
-    >>= writeOutput
-    >>= exitCode
+renderResults :: EvaluatedDocument -> IO EvaluatedDocument
+renderResults doc = do
+  Text.putStrLn $ renderDocument doc
+  pure doc
 
-listify :: Applicative f => Result a b -> f (Result [a] [b])
-listify = pure . \case
-  Result a -> Result [a]
-  Errors e -> Errors [e]
-
-reportErrors :: Result [Document] [Document] -> IO (Result [Document] [Document])
-reportErrors = \case
-  r@(Errors docs) -> do
-    forM_ docs (putStrLn . intercalate "\n" .  fmap renderBlock . documentBlocks)
-    pure r
-  r -> pure r
-
-exitCode :: Result [Document] [Document] -> IO ()
-exitCode = \case
-  Result _ -> pure ()
-  Errors _ -> exitFailure
-
-writeOutput :: Result [Document] [Document] -> IO (Result [Document] [Document])
-writeOutput = \case
-  r@(Result xs) -> do
-    forM_ xs (putStrLn . intercalate "\n" . fmap renderBlock . documentBlocks)
-    pure r
-  r -> pure r
+exitCodeOnFailure :: EvaluatedDocument -> IO ()
+exitCodeOnFailure doc = when (documentHasErrors doc) exitFailure

@@ -5,7 +5,7 @@ module Thut.Parser
 import Thut.Prelude
 
 import           Control.Monad (mapM_)
-import           Control.Monad.Trans.State.Lazy
+import           Control.Monad.State.Lazy (State, execState, get, put)
 import           Data.Text (Text, isPrefixOf)
 import qualified Data.Text as Text
 import           Thut.Types
@@ -22,13 +22,14 @@ parseDocument fp =
 data Parsed = Parsed
   { currentBlock :: Block
   , parsedBlocks :: [Block]
+  , parsedLine :: Int
   }
 
 getBlocks :: Parsed -> [Block]
 getBlocks Parsed{..} = parsedBlocks ++ [currentBlock]
 
 initialParsed :: Parsed
-initialParsed = Parsed (Markdown []) []
+initialParsed = Parsed (Markdown []) [] 1
 
 parseTitle :: Text -> CodeblockType
 parseTitle title = case Text.strip title of
@@ -45,21 +46,20 @@ parseLine line =
     addLine line
 
 addLine :: Text -> State Parsed ()
-addLine line = get >>= \parsed ->
+addLine inputLine = get >>= \Parsed{..}->
   let
-    newBlock = case currentBlock parsed of
+    line = Line parsedLine inputLine
+    newBlock = case currentBlock of
       Markdown lines -> Markdown $ lines ++ [line]
       Codeblock title lines -> Codeblock title $ lines ++ [line]
   in
-    put $ parsed { currentBlock = newBlock }
+    put $ Parsed newBlock parsedBlocks (parsedLine + 1)
 
 toggleCodeblock :: Text -> State Parsed ()
-toggleCodeblock title = do
-  Parsed current parsed <- get
-
+toggleCodeblock title = get >>= \(Parsed current parsed line) ->
   let
     newCurrent = case current of
       Markdown _ -> Codeblock (parseTitle title) []
       Codeblock _ _ -> Markdown []
-
-  put $ Parsed newCurrent (parsed ++ [current])
+  in
+    put $ Parsed newCurrent (parsed ++ [current]) (line + 1)
