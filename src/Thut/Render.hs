@@ -74,7 +74,9 @@ renderErrors config =
 
 renderBlockErrors :: InterpreterConfig -> FilePath -> Maybe EvaluatedBlock -> EvaluatedBlock -> [EvaluatedBlock] -> [Text]
 renderBlockErrors config fp prev current [] =
-  renderFrame config fp ++ peekPrev prev ++ myRender config current
+  renderFrame config fp ++
+  peekPrev prev ++
+  myRender config current
 renderBlockErrors config fp prev current (next : rest) =
   renderFrame config fp ++
   peekPrev prev ++
@@ -93,10 +95,10 @@ myRender config = \case
 
 renderBlockType :: CodeblockType -> Text
 renderBlockType = \case
-  ThutSilent -> "```thut:silent"
-  ThutEval -> "```thut:eval"
+  ThutSilent      -> "```thut:silent"
+  ThutEval        -> "```thut:eval"
   ThutPassthrough -> "```thut:passthrough"
-  Other title -> "```" <> title
+  Other title     -> "```" <> title
 
 errorLine :: InterpreterConfig -> EvaluatedLine -> [Text]
 errorLine config line@EvaluatedLine{..}
