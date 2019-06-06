@@ -1,7 +1,8 @@
 Thut
 ====
-Thut is a tool to statically generate tutorial codes using markdown and GHCi.
+[![Build Status](https://travis-ci.org/felixmulder/thut.svg?branch=master)](https://travis-ci.org/felixmulder/thut)
 
+Thut is a tool to statically generate tutorial codes using markdown and GHCi.
 
 ## Developing
 You need to have [nix](https://nixos.org/nix/) installed. Then you can do:

@@ -1,0 +1,6 @@
+language: haskell
+ghc:
+  - 8.6.4
+
+script:
+  - cabal v2-test
