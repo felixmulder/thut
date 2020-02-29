@@ -53,10 +53,13 @@ interpretBlock ghci = \case
 
 withGhci :: InterpreterConfig -> (Ghci -> IO a) -> IO a
 withGhci InterpreterConfig{..} f = do
-  (ghci, _) <- startGhci (Text.unpack configStartCmd) Nothing (\_ _ -> pure ())
+  (ghci, _) <- startGhci (Text.unpack configStartCmd) Nothing (\_ -> logOutput configVerbose)
   a <- f ghci
   stopGhci ghci
   pure a
+  where
+    logOutput True msg = putStrLn (Text.pack msg)
+    logOutput False _ = pure ()
 
 evalPure :: Line -> EvaluatedLine
 evalPure line = EvaluatedLine line [] []

@@ -9,6 +9,7 @@ data InterpreterConfig = InterpreterConfig
   { configStartCmd :: Text
   , configUseColor :: Bool
   , configSymbols :: Symbols
+  , configVerbose :: Bool
   }
 
 data Symbols
@@ -21,6 +22,7 @@ instance Default InterpreterConfig where
     { configStartCmd = "cabal v2-repl"
     , configUseColor = True
     , configSymbols = Fancy
+    , configVerbose = False
     }
 
 data Document = Document
